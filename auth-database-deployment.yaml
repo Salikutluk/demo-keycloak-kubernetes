@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-database-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-db
+  template:
+    metadata:
+      labels:
+        app: auth-db
+    spec:
+      volumes:
+        - name: auth-db-storage
+          persistentVolumeClaim:
+              claimName: auth-db-persistent-volume-claim
+      containers:
+      - name: auth-db
+        image: mysql:5.7.22
+        ports:
+        - containerPort: 3306
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom: 
+              secretKeyRef:
+                name: auth-db-root-pw
+                key: MYSQL_ROOT_PASSWORD
+          - name: MYSQL_DATABASE
+            value: keycloak
+          - name: MYSQL_USER
+            valueFrom:
+                secretKeyRef:
+                  name: auth-db-root-pw
+                  key: MYSQL_USER
+          - name: MYSQL_PASSWORD
+            valueFrom:
+                secretKeyRef:
+                  name: auth-db-root-pw
+                  key: MYSQL_PASSWORD
+        volumeMounts:
+          - name: auth-db-storage
+            mountPath: /var/lib/mysql
+            subPath: mysql
